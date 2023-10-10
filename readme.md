@@ -1,4 +1,4 @@
-# Use SIMD and OpenMP to optimize your C code
+# Use SIMD and OpenMP to calculate PI
 
 1. Make sure your cpu is of x86-64 architecture and supports avx and avx512f extensions.(Use `lscpu` to check.)
 2. You can modify the OPTIMIZATION in `makefile` to find out how gcc speed up your code without your manual optimization.(Default level is `-O0`, i.e. no optimization)
