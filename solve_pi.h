@@ -24,6 +24,11 @@ double solve_parallel_basic();
 // multi-thread bad because of coherence miss
 double solve_parallel_coherence_miss();
 
+#ifdef AVX
+// multi-thread simd
+double solve_parallel_simd_256();
+#endif
+
 #ifdef AVX512F
 // multi-thread simd
 double solve_parallel_simd_512();

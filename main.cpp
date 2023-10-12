@@ -26,6 +26,9 @@ int main() {
     measure("sequencial simd 512", &solve_sequencial_simd_512);
     #endif
     measure("parallel basic (8 threads)", &solve_parallel_basic);
+    #ifdef AVX
+    measure("parallel simd 256 (8 threads)", &solve_parallel_simd_256);
+    #endif
     #ifdef AVX512F
     measure("parallel simd 512 (8 threads)", &solve_parallel_simd_512);
     #endif

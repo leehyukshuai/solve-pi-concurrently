@@ -127,6 +127,46 @@ double solve_parallel_coherence_miss() {
     return pi;
 }
 
+#ifdef AVX
+double solve_parallel_simd_256() {
+    double pi = 0;
+
+    const int pack = sizeof(__m256d) / sizeof(double);
+    const int threads = 8;
+    const double blocksize = 1.0 / threads;
+
+    omp_set_num_threads(threads);
+#pragma omp parallel
+    {
+        int id = omp_get_thread_num();
+
+        double x0 = blocksize * id;
+        __m256d SUM = _mm256_set_pd(0, 0, 0, 0);
+        __m256d X = _mm256_set_pd(x0 + dx * 0, x0 + dx * 1, x0 + dx * 2, x0 + dx * 3);
+        __m256d DX = _mm256_set_pd(dx * pack, dx * pack, dx * pack, dx * pack);
+        __m256d ONE = _mm256_set_pd(1, 1, 1, 1);
+
+        uint steps = (uint)(1.0 / dx / threads) / pack;
+        for (; steps--;) {
+            SUM = _mm256_add_pd(SUM, _mm256_div_pd(ONE, _mm256_add_pd(_mm256_mul_pd(X, X), ONE)));
+            X = _mm256_add_pd(X, DX);
+        }
+
+        double sum[4];
+        // BUGFIX: _mm256_store_pd require data to be aligned by 32 bytes!
+        _mm256_storeu_pd(sum, SUM);
+
+        double s = sum[0] + sum[1] + sum[2] + sum[3];
+        s *= dx * 4;
+
+#pragma omp critical
+        pi += s;
+    }
+
+    return pi;
+}
+#endif
+
 #ifdef AVX512F
 double solve_parallel_simd_512() {
     double pi = 0;
