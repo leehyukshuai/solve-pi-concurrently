@@ -16,9 +16,18 @@ void measure(const char *description, double (*p)(void)) {
 
 int main() {
     measure("sequencial basic", &solve_sequencial_basic);
+    #ifdef SSE2
+    measure("sequencial simd 128", &solve_sequencial_simd_128);
+    #endif
+    #ifdef AVX
     measure("sequencial simd 256", &solve_sequencial_simd_256);
+    #endif
+    #ifdef AVX512F
     measure("sequencial simd 512", &solve_sequencial_simd_512);
+    #endif
     measure("parallel basic (8 threads)", &solve_parallel_basic);
+    #ifdef AVX512F
     measure("parallel simd 512 (8 threads)", &solve_parallel_simd_512);
-    // measure("parallel slow with coherence miss (8 threads)", &solve_parallel_coherence_miss);
+    #endif
+    measure("parallel slow with coherence miss (8 threads)", &solve_parallel_coherence_miss);
 }

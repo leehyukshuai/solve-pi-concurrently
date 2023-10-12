@@ -1,4 +1,5 @@
 #include <immintrin.h>
+#include <xmmintrin.h>
 #include <omp.h>
 #include "solve_pi.h"
 
@@ -11,6 +12,30 @@ double solve_sequencial_basic() {
     return pi;
 }
 
+#ifdef SSE2
+double solve_sequencial_simd_128() {
+    const int pack = sizeof(__m128d) / sizeof(double);
+
+    __m128d SUM = _mm_set_pd(0, 0);
+    __m128d X = _mm_set_pd(dx * 0, dx * 1);
+    __m128d DX = _mm_set_pd(dx * pack, dx * pack);
+    __m128d ONE = _mm_set_pd(1, 1);
+
+    uint steps = (uint)(1.0 / dx) / pack;
+    for (; steps--;) {
+        SUM = _mm_add_pd(SUM, _mm_div_pd(ONE, _mm_add_pd(_mm_mul_pd(X, X), ONE)));
+        X = _mm_add_pd(X, DX);
+    }
+
+    double sum[pack];
+    // BUGFIX: _mm_store_pd require data to be aligned by 32 bytes!
+    _mm_storeu_pd(sum, SUM);
+    double pi = (sum[0] + sum[1]) * dx * 4;
+    return pi;
+}
+#endif
+
+#ifdef AVX
 double solve_sequencial_simd_256() {
     const int pack = sizeof(__m256d) / sizeof(double);
 
@@ -31,7 +56,9 @@ double solve_sequencial_simd_256() {
     double pi = (sum[0] + sum[1] + sum[2] + sum[3]) * dx * 4;
     return pi;
 }
+#endif
 
+#ifdef AVX512F
 double solve_sequencial_simd_512() {
     const int pack = sizeof(__m512d) / sizeof(double);
 
@@ -52,6 +79,7 @@ double solve_sequencial_simd_512() {
     double pi = sum[0] + sum[1] + sum[2] + sum[3] + sum[4] + sum[5] + sum[6] + sum[7];
     return pi * dx * 4;
 }
+#endif
 
 double solve_parallel_basic() {
     double pi = 0;
@@ -99,6 +127,7 @@ double solve_parallel_coherence_miss() {
     return pi;
 }
 
+#ifdef AVX512F
 double solve_parallel_simd_512() {
     double pi = 0;
 
@@ -136,3 +165,4 @@ double solve_parallel_simd_512() {
 
     return pi;
 }
+#endif
